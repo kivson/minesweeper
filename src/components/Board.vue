@@ -1,7 +1,7 @@
 <template>
     <div class="container mx-auto ">
         <div class="flex flex-col items-center">
-            <div v-for="(row, rowIdx) in cells" class="flex ">
+            <div v-for="(row, rowIdx) in cells" class="flex">
                 <Tile v-for="(cell, colIdx) in row"
                       :value="cell.value"
                       :is-flag="cell.isFlag"

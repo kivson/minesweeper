@@ -1,16 +1,21 @@
-import {cellsToBeOpen, generateBlankCells, moveWillEndGame, putMines} from "@/services/game-service";
+import {
+  cellsToBeOpen,
+  gameEnded,
+  gameWon,
+  generateBlankCells,
+  moveWillEndGame,
+  putMines
+} from "@/services/game-service";
 
 const DEFAULT_CONFIG = {
-  cols: 30,
-  rows: 15,
-  mines: 10,
+  cols: 9,
+  rows: 9,
+  mines: 2,
 };
 
 const state = {
   config : DEFAULT_CONFIG,
-  cells: [],
-  won: false,
-  ended: false
+  cells: []
 
 }
 
@@ -18,16 +23,16 @@ const mutations = {
   setCells(state, cells){
     state.cells = cells
   },
-  setEndFlag(state, ended){
-    state.ended = ended
-  },
-  setWonFlag(state, won){
-    state.won = won
-  },
   openCell(state, {row,col}){
+    if (state.cells[row][col].isFlag){
+      return
+    }
     state.cells[row][col].isOpen = true
   },
   flagCell(state, {row,col}){
+    if (state.cells[row][col].isOpen){
+      return
+    }
     state.cells[row][col].isFlag = !state.cells[row][col].isFlag
   },
   openMultipleCells(state, positions){
@@ -52,14 +57,14 @@ const actions = {
   }
   ,
   openCell(context, {row,col}){
-    if(context.state.cells[row][col].isBomb && !context.state.cells[row][col].isFlag){
-      context.commit("setEndFlag", true)
-      context.commit("openAllCells")
-    }
 
     const positionsToOpen = cellsToBeOpen(context.state.cells, {row,col})
-    console.log(positionsToOpen)
+
     context.commit("openMultipleCells", positionsToOpen)
+
+    if (context.getters.ended && !context.getters.won){
+      context.commit("openAllCells")
+    }
 
   },
   flagCell(context, {row,col}){
@@ -67,10 +72,19 @@ const actions = {
   }
 }
 
+const getters = {
+  won(state) {
+    return gameWon(state.cells)
+  },
+  ended(state){
+    return gameEnded(state.cells)
+  }
+}
 
 export default {
   namespaced: true,
   state,
   actions,
-  mutations
+  mutations,
+  getters
 }

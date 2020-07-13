@@ -47,6 +47,44 @@ export function putMines(cells, minesQuantity) {
   return cells
 }
 
+let everyCell = (cells) => (predicate) => {
+  for (const [rowIdx, rows] of cells.entries()) {
+    for (let [colIdx, cell] of rows.entries()) {
+      if (!predicate(cell)){
+        return false
+      }
+    }
+  }
+  return true
+}
+
+let someCell = (cells) => (predicate) => {
+  for (const [rowIdx, rows] of cells.entries()) {
+    for (let [colIdx, cell] of rows.entries()) {
+      if (predicate(cell)){
+        return true
+      }
+    }
+  }
+  return false
+}
+
+export function gameEnded(cells) {
+  let someChecker = someCell(cells)
+  let openBomb = cell => cell.isOpen && cell.isBomb
+
+  return gameWon(cells) || someChecker(openBomb)
+}
+
+export function gameWon(cells) {
+
+  let everyChecker = everyCell(cells)
+  let someChecker = someCell(cells)
+  let wrongFlag = cell => (!cell.isBomb && cell.isFlag) || (cell.isBomb && !cell.isFlag)
+  let openOrFlag = cell => cell.isOpen || cell.isFlag
+  return everyChecker(openOrFlag) && !someChecker(wrongFlag)
+}
+
 export function cellsToBeOpen(cells, {row, col}){
   let cell = cells[row][col]
 
