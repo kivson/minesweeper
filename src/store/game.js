@@ -3,44 +3,41 @@ import {
   gameEnded,
   gameWon,
   generateBlankCells,
-  moveWillEndGame,
+  moveWillEndGame, neighborsToOpen,
   putMines
 } from "@/services/game-service";
 
-const DEFAULT_CONFIG = {
-  cols: 9,
-  rows: 9,
-  mines: 2,
-};
+
 
 const state = {
-  config : DEFAULT_CONFIG,
-  cells: []
+  cells: [],
+  currentConfig: {
 
+  }
 }
 
 const mutations = {
-  setCells(state, cells){
+  setCells(state, cells) {
     state.cells = cells
   },
-  openCell(state, {row,col}){
-    if (state.cells[row][col].isFlag){
+  setCurrentConfig(state, config){
+    state.currentConfig = config
+  },
+  openCell(state, {row, col}) {
+    if (state.cells[row][col].isFlag) {
       return
     }
     state.cells[row][col].isOpen = true
   },
-  flagCell(state, {row,col}){
-    if (state.cells[row][col].isOpen){
-      return
-    }
+  flagCell(state, {row, col}) {
     state.cells[row][col].isFlag = !state.cells[row][col].isFlag
   },
-  openMultipleCells(state, positions){
+  openMultipleCells(state, positions) {
     for (const position of positions) {
       state.cells[position.row][position.col].isOpen = true
     }
   },
-  openAllCells(state){
+  openAllCells(state) {
     for (let row = 0; row < state.cells.length; row++) {
       for (let col = 0; col < state.cells[0].length; col++) {
         state.cells[row][col].isOpen = true
@@ -50,25 +47,45 @@ const mutations = {
 }
 
 const actions = {
-  generateCells(context){
-    let cells = generateBlankCells(context.state.config)
-    putMines(cells, context.state.config.mines)
+  recreateGame(context){
+    context.dispatch("generateCells",context.state.currentConfig)
+  },
+  generateCells(context, config) {
+    let cells = generateBlankCells(config)
+    putMines(cells, config.mines)
+    context.commit("setCurrentConfig", config)
     context.commit("setCells", cells)
-  }
-  ,
-  openCell(context, {row,col}){
-
-    const positionsToOpen = cellsToBeOpen(context.state.cells, {row,col})
+  },
+  openCell(context, {row, col}) {
+    if (context.state.cells[row][col].isOpen) {
+      return
+    }
+    const positionsToOpen = cellsToBeOpen(context.state.cells, {row, col})
 
     context.commit("openMultipleCells", positionsToOpen)
 
-    if (context.getters.ended && !context.getters.won){
+    if (context.getters.ended && !context.getters.won) {
       context.commit("openAllCells")
     }
 
   },
-  flagCell(context, {row,col}){
-    context.commit("flagCell", {row,col})
+  openNeighbors(context,{row, col}){
+    if (!context.state.cells[row][col].isOpen) {
+      return
+    }
+    let positionsToOpen = neighborsToOpen(context.state.cells, {row, col})
+    context.commit("openMultipleCells", positionsToOpen)
+
+    if (context.getters.ended && !context.getters.won) {
+      context.commit("openAllCells")
+    }
+
+  },
+  flagCell(context, {row, col}) {
+    if (context.state.cells[row][col].isOpen) {
+      return
+    }
+    context.commit("flagCell", {row, col})
   }
 }
 
@@ -76,8 +93,11 @@ const getters = {
   won(state) {
     return gameWon(state.cells)
   },
-  ended(state){
+  ended(state) {
     return gameEnded(state.cells)
+  },
+  remainingFlags(state){
+    return state.cells.flat().filter(c => c.isBomb).length - state.cells.flat().filter(c => c.isFlag).length
   }
 }
 

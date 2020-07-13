@@ -85,6 +85,22 @@ export function gameWon(cells) {
   return everyChecker(openOrFlag) && !someChecker(wrongFlag)
 }
 
+export function neighborsToOpen(cells, {row, col}) {
+  let neighbors = getNeighbors({row, col});
+  let cell = cells[row][col];
+  // debugger
+  if(neighbors.filter(neighbor => cells[neighbor.row]?.[neighbor.col].isFlag).length !== cell.value){
+    return []
+  }
+  let neighborsValid = neighbors.filter(neighbor => {
+    let exists = cells[neighbor.row]?.[neighbor.col] ?? false
+    let notFlag = !cells[neighbor.row]?.[neighbor.col].isFlag
+    return exists && notFlag
+  })
+  return neighborsValid.flatMap(neighbor => cellsToBeOpen(cells, neighbor))
+
+}
+
 export function cellsToBeOpen(cells, {row, col}){
   let cell = cells[row][col]
 
@@ -108,8 +124,8 @@ export function cellsToBeOpen(cells, {row, col}){
       .filter(neighbor => {
         let isVisited = visited.find(element => element.row === neighbor.row && element.col === neighbor.col)
         let exists = cells[neighbor.row]?.[neighbor.col] ?? false
-
-        return exists && !isVisited
+        let isFlag = cells[neighbor.row]?.[neighbor.col]?.isFlag
+        return exists && !isVisited && !isFlag
       })
 
     frontier = frontier.concat(neighbors)
