@@ -8,7 +8,7 @@
         <button class="flex flex-col items-center hover:bg-blue-300 p-2 focus:outline-none" @click="recreateGame">
             <div class="text-3xl font-semibold">↻</div>
             <span>Restart</span></button>
-<!--        <div class="text-3xl font-semibold">00:00</div>-->
+        <div class="text-3xl font-semibold text-gray-400">00:00</div>
     </div>
 </template>
 
